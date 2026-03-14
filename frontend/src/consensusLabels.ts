@@ -83,8 +83,18 @@ const labels: Record<ConsensusLevel, string[]> = {
   ],
 };
 
-const pick = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)];
+// Seed from the actual votes so all clients pick the same label
+function seedFromVotes(votes: string[]): number {
+  const str = [...votes].sort().join(",");
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash * 31 + str.charCodeAt(i)) >>> 0;
+  }
+  return hash;
+}
 
-export function getConsensusLabel(level: ConsensusLevel): string {
-  return pick(labels[level]);
+export function getConsensusLabel(level: ConsensusLevel, votes: string[]): string {
+  const seed = seedFromVotes(votes);
+  const arr = labels[level];
+  return arr[seed % arr.length];
 }

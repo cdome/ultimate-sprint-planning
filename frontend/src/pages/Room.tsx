@@ -26,7 +26,6 @@ export function Room() {
   const [joined, setJoined] = useState(false);
   const [joining, setJoining] = useState(false);
   const [myVote, setMyVote] = useState<string | null>(null);
-  const [consensusLabel, setConsensusLabel] = useState<string | null>(null);
 
   // Re-join on page refresh if we have a name stored
   useEffect(() => {
@@ -52,13 +51,9 @@ export function Room() {
     }
   };
 
-  // Clear local vote when a new round starts; pick consensus label on reveal
+  // Clear local vote when a new round starts
   useEffect(() => {
-    if (!room) return;
-    if (!room.revealed) {
-      setMyVote(null);
-      setConsensusLabel(null);
-    }
+    if (room && !room.revealed) setMyVote(null);
   }, [room?.revealed]);
 
   const handleVote = async (card: string) => {
@@ -193,8 +188,7 @@ export function Room() {
           max! - min! <= 5 ? "some" :
           "wide";
 
-        if (!consensusLabel) setConsensusLabel(getConsensusLabel(level));
-        const consensus = consensusLabel ?? "";
+        const consensus = getConsensusLabel(level, votes);
 
         return (
           <div className="results">
