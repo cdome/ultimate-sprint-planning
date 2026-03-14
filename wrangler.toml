@@ -1,0 +1,8 @@
+name = "sprint-planning"
+pages_build_output_dir = "frontend/dist"
+compatibility_date = "2024-09-23"
+
+[[kv_namespaces]]
+binding = "ROOMS"
+id = "0c581276db024733ad27b922101e574f"
+preview_id = "6541402000434df5bc146752e6c596b5"
