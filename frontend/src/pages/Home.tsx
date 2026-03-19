@@ -1,32 +1,33 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { createRoom } from "../api";
+import { randomRoomName } from "../roomNames";
+
+function slugify(name: string): string {
+  return name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "").slice(0, 50);
+}
 
 export function Home() {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [roomName, setRoomName] = useState("");
 
-  const handleCreate = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const { roomId, facilitatorId } = await createRoom();
-      localStorage.setItem(`facilitator_${roomId}`, facilitatorId);
-      navigate(`/room/${roomId}`);
-    } catch {
-      setError("Failed to create room. Try again.");
-      setLoading(false);
-    }
+  const handleCreate = (e: React.FormEvent) => {
+    e.preventDefault();
+    const slug = slugify(roomName);
+    navigate(`/room/${slug || randomRoomName()}`);
   };
 
   return (
     <div className="home">
       <p>Create a room and share the link with your team.</p>
-      <button onClick={handleCreate} disabled={loading}>
-        {loading ? "Creating..." : "Create Room"}
-      </button>
-      {error && <p className="error">{error}</p>}
+      <form onSubmit={handleCreate}>
+        <input
+          placeholder="Room name (optional)"
+          value={roomName}
+          onChange={(e) => setRoomName(e.target.value)}
+          maxLength={60}
+        />
+        <button type="submit">Create Room</button>
+      </form>
     </div>
   );
 }
