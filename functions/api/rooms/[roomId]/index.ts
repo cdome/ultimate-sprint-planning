@@ -9,7 +9,15 @@ export const onRequestGet: PagesFunction<Env> = async ({ params, env }) => {
   const raw = await env.ROOMS.get(roomId);
 
   if (!raw) {
-    return Response.json({ error: "Room not found" }, { status: 404 });
+    const room: RoomState = {
+      roomId,
+      facilitatorId: crypto.randomUUID(),
+      participants: {},
+      revealed: false,
+      createdAt: Date.now(),
+    };
+    await env.ROOMS.put(roomId, JSON.stringify(room), { expirationTtl: 86400 });
+    return Response.json(room);
   }
 
   const room: RoomState = JSON.parse(raw);
