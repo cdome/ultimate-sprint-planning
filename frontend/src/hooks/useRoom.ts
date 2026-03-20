@@ -31,5 +31,16 @@ export function useRoom(roomId: string | null) {
     };
   }, [roomId]);
 
-  return { room, error };
+  const refresh = async () => {
+    if (!roomId) return;
+    try {
+      const data = await getRoom(roomId);
+      setRoom(data);
+      setError(null);
+    } catch {
+      setError("Room not found or connection lost");
+    }
+  };
+
+  return { room, error, refresh };
 }

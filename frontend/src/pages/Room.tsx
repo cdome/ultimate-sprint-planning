@@ -18,7 +18,7 @@ function getOrCreateClientId(roomId: string): string {
 
 export function Room() {
   const { roomId } = useParams<{ roomId: string }>();
-  const { room, error } = useRoom(roomId ?? null);
+  const { room, error, refresh } = useRoom(roomId ?? null);
 
   const [clientId] = useState(() => getOrCreateClientId(roomId!));
 
@@ -77,10 +77,12 @@ export function Room() {
 
   const handleReveal = async () => {
     await revealVotes(roomId!);
+    await refresh();
   };
 
   const handleReset = async () => {
     await resetVotes(roomId!);
+    await refresh();
   };
 
   if (error) {
