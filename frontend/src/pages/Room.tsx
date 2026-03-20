@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { useRoom } from "../hooks/useRoom";
 import { joinRoom, castVote, revealVotes, resetVotes } from "../api";
@@ -60,12 +60,14 @@ export function Room() {
     }
   };
 
-  // Clear local vote when a new round starts
+  // Clear local vote only when revealed transitions true → false (actual reset)
+  const prevRevealed = useRef<boolean | undefined>(undefined);
   useEffect(() => {
-    if (room && !room.revealed) {
+    if (prevRevealed.current === true && room && !room.revealed) {
       setMyVote(null);
       localStorage.removeItem(`vote_${roomId}`);
     }
+    if (room) prevRevealed.current = room.revealed;
   }, [room?.revealed]);
 
   const handleVote = async (card: string) => {
