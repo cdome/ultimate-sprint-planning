@@ -25,7 +25,9 @@ export function Room() {
   const [name, setName] = useState("");
   const [joined, setJoined] = useState(false);
   const [joining, setJoining] = useState(false);
-  const [myVote, setMyVote] = useState<string | null>(null);
+  const [myVote, setMyVote] = useState<string | null>(
+    () => localStorage.getItem(`vote_${roomId}`)
+  );
 
   // Re-join on page refresh if we have a name stored
   useEffect(() => {
@@ -60,12 +62,16 @@ export function Room() {
 
   // Clear local vote when a new round starts
   useEffect(() => {
-    if (room && !room.revealed) setMyVote(null);
+    if (room && !room.revealed) {
+      setMyVote(null);
+      localStorage.removeItem(`vote_${roomId}`);
+    }
   }, [room?.revealed]);
 
   const handleVote = async (card: string) => {
     if (!joined || room?.revealed) return;
     setMyVote(card);
+    localStorage.setItem(`vote_${roomId}`, card);
     await castVote(roomId!, clientId, card);
   };
 
