@@ -31,8 +31,15 @@ export function Room() {
   useEffect(() => {
     const storedName = localStorage.getItem(`name_${roomId}`);
     if (storedName && room && !room.participants[clientId]) {
-      joinRoom(roomId!, clientId, storedName).catch(() => {});
-      setJoined(true);
+      (async () => {
+        try {
+          await joinRoom(roomId!, clientId, storedName);
+          setJoined(true);
+        } catch {
+          // join failed — clear stored name so user gets the form
+          localStorage.removeItem(`name_${roomId}`);
+        }
+      })();
     } else if (room?.participants[clientId]) {
       setJoined(true);
     }

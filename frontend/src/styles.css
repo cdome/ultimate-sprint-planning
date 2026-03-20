@@ -255,6 +255,52 @@
   --cw-bg: #1a0808; --cw-border: #c05050; --cw-text: #c05050;
 }
 
+/* ─── Cobalt2 ────────────────────────────────────────────────── */
+[data-theme="cobalt2"] {
+  --bg:            #193549;
+  --surface:       #1f4662;
+  --surface-hover: #265478;
+  --border:        #0d3349;
+  --text:          #ffffff;
+  --text-muted:    #9bb3c4;
+  --text-dim:      #5a7f96;
+  --accent:        #ffc600;
+  --accent-hover:  #e6b200;
+  --accent-2:      #ff9d00;
+  --result-value:  #ffc600;
+  --card-sel-bg:   #0d3349;
+  --voted-bg:      #0d2e10;
+  --voted-text:    #3ad900;
+  --font:          system-ui, -apple-system, sans-serif;
+  --cp-bg: #0d2e10; --cp-border: #3ad900; --cp-text: #3ad900;
+  --cg-bg: #2e2200; --cg-border: #ffc600; --cg-text: #ffc600;
+  --cs-bg: #2e1400; --cs-border: #ff9d00; --cs-text: #ff9d00;
+  --cw-bg: #2e0a0a; --cw-border: #ff4444; --cw-text: #ff4444;
+}
+
+/* ─── Spring ─────────────────────────────────────────────────── */
+[data-theme="spring"] {
+  --bg:            #f2faf2;
+  --surface:       #e0f5e0;
+  --surface-hover: #cceacc;
+  --border:        #a8d8a8;
+  --text:          #1a3a1a;
+  --text-muted:    #4a7a4a;
+  --text-dim:      #7aaa7a;
+  --accent:        #2d9e4a;
+  --accent-hover:  #228a3d;
+  --accent-2:      #e05b8a;
+  --result-value:  #2d9e4a;
+  --card-sel-bg:   #b8e8b8;
+  --voted-bg:      #c0f0c0;
+  --voted-text:    #1a5a1a;
+  --font:          system-ui, -apple-system, sans-serif;
+  --cp-bg: #c0f0c0; --cp-border: #2d9e4a; --cp-text: #1a5a1a;
+  --cg-bg: #fef9c0; --cg-border: #b5960a; --cg-text: #7a6000;
+  --cs-bg: #fde8c0; --cs-border: #c97010; --cs-text: #8a4a00;
+  --cw-bg: #fdd8d8; --cw-border: #c03030; --cw-text: #7a1010;
+}
+
 /* ─── Base styles ────────────────────────────────────────────── */
 body {
   font-family: var(--font);

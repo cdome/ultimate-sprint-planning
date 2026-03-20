@@ -16,4 +16,6 @@ export const THEMES: Theme[] = [
   { id: "sunset",        name: "Sunset",         icon: "🌅" },
   { id: "cyberpunk",     name: "Cyberpunk",      icon: "⚡" },
   { id: "coffee",        name: "Coffee",         icon: "☕" },
+  { id: "cobalt2",       name: "Cobalt2",        icon: "🔵" },
+  { id: "spring",        name: "Spring",         icon: "🌿" },
 ];
