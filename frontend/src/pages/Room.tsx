@@ -18,9 +18,13 @@ function getOrCreateClientId(roomId: string): string {
 
 export function Room() {
   const { roomId } = useParams<{ roomId: string }>();
-  const { room, error, refresh } = useRoom(roomId ?? null);
+  const { room, error } = useRoom(roomId ?? null);
 
   const [clientId] = useState(() => getOrCreateClientId(roomId!));
+  // publicId is the ID we appear as in broadcasts — safe to share, useless for forging votes
+  const [publicId, setPublicId] = useState<string | null>(
+    () => localStorage.getItem(`publicId_${roomId}`)
+  );
 
   const [name, setName] = useState("");
   const [joined, setJoined] = useState(false);
@@ -31,36 +35,46 @@ export function Room() {
 
   // Re-join on page refresh if we have a name stored
   useEffect(() => {
+    if (joined || !room) return;
     const storedName = localStorage.getItem(`name_${roomId}`);
-    if (storedName && room && !room.participants[clientId]) {
-      (async () => {
-        try {
-          await joinRoom(roomId!, clientId, storedName);
-          setJoined(true);
-        } catch {
-          // join failed — clear stored name so user gets the form
-          localStorage.removeItem(`name_${roomId}`);
-        }
-      })();
-    } else if (room?.participants[clientId]) {
+    const storedPublicId = localStorage.getItem(`publicId_${roomId}`);
+    if (!storedName) return;
+    // If our publicId is already in the room, we're good
+    if (storedPublicId && room.participants[storedPublicId]) {
+      setPublicId(storedPublicId);
       setJoined(true);
+      return;
     }
-  }, [room, clientId, roomId]);
+    // Otherwise rejoin (first load or DO was reset)
+    (async () => {
+      try {
+        const { publicId: pid } = await joinRoom(roomId!, clientId, storedName);
+        localStorage.setItem(`publicId_${roomId}`, pid);
+        setPublicId(pid);
+        setJoined(true);
+      } catch {
+        localStorage.removeItem(`name_${roomId}`);
+        localStorage.removeItem(`publicId_${roomId}`);
+      }
+    })();
+  }, [room, clientId, roomId, joined]);
 
   const handleJoin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
     setJoining(true);
     try {
-      await joinRoom(roomId!, clientId, name.trim());
+      const { publicId: pid } = await joinRoom(roomId!, clientId, name.trim());
       localStorage.setItem(`name_${roomId}`, name.trim());
+      localStorage.setItem(`publicId_${roomId}`, pid);
+      setPublicId(pid);
       setJoined(true);
     } finally {
       setJoining(false);
     }
   };
 
-  // Clear local vote only when revealed transitions true → false (actual reset)
+  // Clear local vote when revealed transitions true → false (actual reset)
   const prevRevealed = useRef<boolean | undefined>(undefined);
   useEffect(() => {
     if (prevRevealed.current === true && room && !room.revealed) {
@@ -75,16 +89,17 @@ export function Room() {
     setMyVote(card);
     localStorage.setItem(`vote_${roomId}`, card);
     await castVote(roomId!, clientId, card);
+    // WebSocket pushes the updated state to all clients automatically
   };
 
   const handleReveal = async () => {
     await revealVotes(roomId!);
-    await refresh();
+    // WebSocket pushes revealed state to all clients automatically
   };
 
   const handleReset = async () => {
     await resetVotes(roomId!);
-    await refresh();
+    // WebSocket pushes reset state to all clients automatically
   };
 
   if (error) {
@@ -115,7 +130,8 @@ export function Room() {
     );
   }
 
-  const participants = Object.values(room.participants);
+  const participantEntries = Object.entries(room.participants); // [publicId, Participant][]
+  const participants = participantEntries.map(([, p]) => p);
   const votedCount = participants.filter((p) => p.vote !== null).length;
   const anyVoted = votedCount > 0;
 
@@ -136,12 +152,10 @@ export function Room() {
           <Users size={13} /> Participants ({votedCount}/{participants.length} voted)
         </h3>
         <ul>
-          {participants.map((p, i) => {
-            const isMe = Object.entries(room.participants).find(
-              ([id]) => id === clientId
-            )?.[1] === p;
+          {participantEntries.map(([pid, p]) => {
+            const isMe = pid === publicId;
             return (
-              <li key={i} className={isMe ? "me" : ""}>
+              <li key={pid} className={isMe ? "me" : ""}>
                 <span className="participant-name">{p.name}{isMe ? " (you)" : ""}</span>
                 <span className={`vote-badge ${p.vote !== null ? "voted" : "waiting"}`}>
                   {room.revealed
@@ -189,7 +203,6 @@ export function Room() {
           ? sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid]
           : null;
 
-        // Distribution: count per card value
         const dist: Record<string, number> = {};
         for (const v of votes) dist[v] = (dist[v] ?? 0) + 1;
         const topCount = Math.max(...Object.values(dist));

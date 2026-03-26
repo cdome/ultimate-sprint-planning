@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { getRoom } from "../api";
 import type { RoomState } from "../types";
 
 export function useRoom(roomId: string | null) {
@@ -9,38 +8,47 @@ export function useRoom(roomId: string | null) {
   useEffect(() => {
     if (!roomId) return;
 
+    let ws: WebSocket | null = null;
     let cancelled = false;
+    let retryDelay = 1000;
+    let retryTimer: ReturnType<typeof setTimeout>;
 
-    const poll = async () => {
-      try {
-        const data = await getRoom(roomId);
+    const connect = () => {
+      if (cancelled) return;
+      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+      ws = new WebSocket(`${protocol}//${window.location.host}/api/rooms/${roomId}`);
+
+      ws.onmessage = (e) => {
         if (!cancelled) {
-          setRoom(data);
+          setRoom(JSON.parse(e.data));
           setError(null);
+          retryDelay = 1000; // reset backoff on successful message
         }
-      } catch {
-        if (!cancelled) setError("Room not found or connection lost");
-      }
+      };
+
+      ws.onerror = () => {
+        if (!cancelled) setError("Connection lost. Reconnecting…");
+      };
+
+      ws.onclose = () => {
+        ws = null;
+        if (!cancelled) {
+          retryTimer = setTimeout(() => {
+            retryDelay = Math.min(retryDelay * 2, 10000);
+            connect();
+          }, retryDelay);
+        }
+      };
     };
 
-    poll();
-    const id = setInterval(poll, 1500);
+    connect();
+
     return () => {
       cancelled = true;
-      clearInterval(id);
+      clearTimeout(retryTimer);
+      ws?.close();
     };
   }, [roomId]);
 
-  const refresh = async () => {
-    if (!roomId) return;
-    try {
-      const data = await getRoom(roomId);
-      setRoom(data);
-      setError(null);
-    } catch {
-      setError("Room not found or connection lost");
-    }
-  };
-
-  return { room, error, refresh };
+  return { room, error };
 }

@@ -4,9 +4,9 @@
   "scripts": {
     "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:worker\"",
     "dev:frontend": "cd frontend && npm run dev",
-    "dev:worker": "wrangler pages dev frontend/dist --kv ROOMS --port 8788",
+    "dev:worker": "wrangler dev --port 8788",
     "build": "cd frontend && npm run build",
-    "deploy": "npm run build && wrangler pages deploy frontend/dist"
+    "deploy": "npm run build && wrangler deploy"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",

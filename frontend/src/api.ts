@@ -14,13 +14,14 @@ export async function getRoom(roomId: string): Promise<RoomState> {
   return res.json();
 }
 
-export async function joinRoom(roomId: string, clientId: string, name: string): Promise<void> {
+export async function joinRoom(roomId: string, clientId: string, name: string): Promise<{ publicId: string }> {
   const res = await fetch(`${BASE}/rooms/${roomId}/join`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ clientId, name }),
   });
   if (!res.ok) throw new Error("Failed to join room");
+  return res.json();
 }
 
 export async function castVote(roomId: string, clientId: string, vote: string): Promise<void> {
