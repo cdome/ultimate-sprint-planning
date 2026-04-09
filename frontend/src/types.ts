@@ -1,6 +1,7 @@
 export interface Participant {
   name: string;
   vote: string | null;
+  online: boolean;
 }
 
 export interface RoomState {

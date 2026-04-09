@@ -18,9 +18,8 @@ function getOrCreateClientId(roomId: string): string {
 
 export function Room() {
   const { roomId } = useParams<{ roomId: string }>();
-  const { room, error } = useRoom(roomId ?? null);
-
   const [clientId] = useState(() => getOrCreateClientId(roomId!));
+  const { room, error } = useRoom(roomId ?? null, clientId);
   // publicId is the ID we appear as in broadcasts — safe to share, useless for forging votes
   const [publicId, setPublicId] = useState<string | null>(
     () => localStorage.getItem(`publicId_${roomId}`)
@@ -166,7 +165,10 @@ export function Room() {
             const isMe = pid === publicId;
             return (
               <li key={pid} className={isMe ? "me" : ""}>
-                <span className="participant-name">{p.name}{isMe ? " (you)" : ""}</span>
+                <span className="participant-name">
+                  <span className={`presence-dot ${p.online ? "online" : "offline"}`} title={p.online ? "Online" : "Offline"} />
+                  {p.name}{isMe ? " (you)" : ""}
+                </span>
                 <span className={`vote-badge ${p.vote !== null ? "voted" : "waiting"}`}>
                   {room.revealed
                     ? (p.vote ?? "–")

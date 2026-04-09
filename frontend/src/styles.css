@@ -445,7 +445,10 @@ header.room-header {
   border-radius: 8px;
 }
 .participants li.me { border-left: 3px solid var(--accent); }
-.participant-name { font-size: 0.95rem; }
+.participant-name { font-size: 0.95rem; display: flex; align-items: center; gap: 0.5rem; }
+.presence-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.presence-dot.online  { background: #4ade80; box-shadow: 0 0 4px #4ade8088; }
+.presence-dot.offline { background: var(--border); }
 
 .vote-badge {
   font-size: 0.8rem;

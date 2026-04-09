@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import type { RoomState } from "../types";
 
-export function useRoom(roomId: string | null) {
+export function useRoom(roomId: string | null, clientId: string | null = null) {
   const [room, setRoom] = useState<RoomState | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -12,11 +12,17 @@ export function useRoom(roomId: string | null) {
     let cancelled = false;
     let retryDelay = 1000;
     let retryTimer: ReturnType<typeof setTimeout>;
+    let pingTimer: ReturnType<typeof setInterval>;
 
     const connect = () => {
       if (cancelled) return;
       const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-      ws = new WebSocket(`${protocol}//${window.location.host}/api/rooms/${roomId}`);
+      const query = clientId ? `?clientId=${encodeURIComponent(clientId)}` : "";
+      ws = new WebSocket(`${protocol}//${window.location.host}/api/rooms/${roomId}${query}`);
+
+      pingTimer = setInterval(() => {
+        if (ws?.readyState === WebSocket.OPEN) ws.send("ping");
+      }, 15000);
 
       ws.onmessage = (e) => {
         if (!cancelled) {
@@ -31,6 +37,7 @@ export function useRoom(roomId: string | null) {
       };
 
       ws.onclose = () => {
+        clearInterval(pingTimer);
         ws = null;
         if (!cancelled) {
           retryTimer = setTimeout(() => {
@@ -46,6 +53,7 @@ export function useRoom(roomId: string | null) {
     return () => {
       cancelled = true;
       clearTimeout(retryTimer);
+      clearInterval(pingTimer);
       ws?.close();
     };
   }, [roomId]);

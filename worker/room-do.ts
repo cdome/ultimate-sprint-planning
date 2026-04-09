@@ -12,8 +12,8 @@ interface CFStorage {
 }
 interface CFState {
   storage: CFStorage;
-  acceptWebSocket(ws: WebSocket): void;
-  getWebSockets(): WebSocket[];
+  acceptWebSocket(ws: WebSocket, tags?: string[]): void;
+  getWebSockets(tag?: string): WebSocket[];
   blockConcurrencyWhile(fn: () => Promise<void>): void;
 }
 
@@ -39,10 +39,12 @@ export class RoomDO {
 
   async fetch(request: Request): Promise<Response> {
     if (request.headers.get("Upgrade") === "websocket") {
+      const clientId = new URL(request.url).searchParams.get("clientId") ?? "";
       const pair = new WebSocketPair();
-      this.ctx.acceptWebSocket(pair[1]);
+      this.ctx.acceptWebSocket(pair[1], clientId ? [clientId] : []);
       const room = await this.ensureRoom(request.url);
-      pair[1].send(JSON.stringify(this.mask(room)));
+      // Broadcast to all (including the new socket) so everyone sees updated presence
+      this.broadcastOnly(room);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return new Response(null, { status: 101, webSocket: pair[0] } as any);
     }
@@ -60,9 +62,15 @@ export class RoomDO {
     return Response.json(this.mask(room));
   }
 
-  async webSocketMessage(_ws: WebSocket, _msg: string | ArrayBuffer) {}
-  async webSocketClose(ws: WebSocket) { ws.close(); }
-  async webSocketError(ws: WebSocket) { ws.close(); }
+  async webSocketMessage(_ws: WebSocket, _msg: string | ArrayBuffer) {
+    if (this.room) this.broadcastOnly(this.room);
+  }
+  async webSocketClose(_ws: WebSocket) {
+    if (this.room) this.broadcastOnly(this.room);
+  }
+  async webSocketError(_ws: WebSocket) {
+    if (this.room) this.broadcastOnly(this.room);
+  }
 
   // ── Private helpers ──────────────────────────────────────────────────────
 
@@ -89,22 +97,27 @@ export class RoomDO {
    */
   private mask(room: StoredRoom): RoomState {
     const participants: Record<string, Participant> = {};
-    for (const p of Object.values(room.participants)) {
+    for (const [clientId, p] of Object.entries(room.participants)) {
       participants[p.publicId] = {
         name: p.name,
         vote: room.revealed ? p.vote : p.vote !== null ? "hidden" : null,
+        online: this.ctx.getWebSockets(clientId).length > 0,
       };
     }
     return { ...room, participants };
   }
 
-  private async save(room: StoredRoom): Promise<void> {
-    this.room = room;
-    await this.ctx.storage.put("room", room);
+  private broadcastOnly(room: StoredRoom): void {
     const msg = JSON.stringify(this.mask(room));
     for (const ws of this.ctx.getWebSockets()) {
       try { ws.send(msg); } catch { /* ignore closed sockets */ }
     }
+  }
+
+  private async save(room: StoredRoom): Promise<void> {
+    this.room = room;
+    await this.ctx.storage.put("room", room);
+    this.broadcastOnly(room);
   }
 
   // ── Request handlers ─────────────────────────────────────────────────────

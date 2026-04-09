@@ -1,6 +1,7 @@
 export interface Participant {
   name: string;
   vote: string | null; // null = not voted, "hidden" = voted but not revealed, card value when revealed
+  online: boolean;
 }
 
 export interface RoomState {
