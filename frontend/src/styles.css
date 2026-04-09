@@ -460,7 +460,7 @@ header.room-header {
 .vote-badge.waiting { background: var(--surface); color: var(--text-dim); border: 1px solid var(--border); }
 
 /* ─── Cards ──────────────────────────────────────────────────── */
-.card-grid { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+.card-grid { display: flex; flex-wrap: wrap; gap: 0.6rem; padding-top: 0.5rem; padding-bottom: 1rem; }
 .card {
   width: 60px;
   height: 80px;
@@ -470,10 +470,41 @@ header.room-header {
   border: 2px solid var(--border);
   border-radius: 10px;
   color: var(--text);
-  transition: border-color 0.15s, background 0.15s, transform 0.1s;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.15s, background 0.15s, transform 0.15s, box-shadow 0.15s;
 }
-.card:hover:not(:disabled) { border-color: var(--accent); background: var(--surface-hover); transform: translateY(-4px); }
-.card.selected { border-color: var(--accent); background: var(--card-sel-bg); color: var(--result-value); }
+.card:hover:not(.selected):not(:disabled) {
+  border-color: var(--accent);
+  background: var(--surface-hover);
+  transform: translateY(-4px);
+}
+.card.selected {
+  border-color: var(--accent);
+  background: var(--card-sel-bg);
+  color: var(--result-value);
+  animation: card-select 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.card.selected::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 35%, color-mix(in srgb, var(--accent) 45%, white) 50%, transparent 65%);
+  animation: card-shine 0.5s 0.08s ease-out forwards;
+  opacity: 0;
+  pointer-events: none;
+}
+@keyframes card-select {
+  0%   { transform: translateY(2px) scale(0.94);   box-shadow: none; }
+  45%  { transform: translateY(-16px) scale(1.18); box-shadow: 0 20px 40px color-mix(in srgb, var(--accent) 60%, transparent); }
+  100% { transform: translateY(-8px) scale(1.07);  box-shadow: 0 8px 24px color-mix(in srgb, var(--accent) 35%, transparent), 0 0 0 2px color-mix(in srgb, var(--accent) 70%, transparent); }
+}
+@keyframes card-shine {
+  0%   { opacity: 0; transform: translateX(-150%) skewX(-15deg); }
+  25%  { opacity: 1; }
+  100% { opacity: 0; transform: translateX(250%)  skewX(-15deg); }
+}
 
 /* ─── Results ────────────────────────────────────────────────── */
 .result-grid { display: flex; flex-wrap: wrap; gap: 0.75rem; }
