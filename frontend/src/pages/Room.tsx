@@ -84,6 +84,16 @@ export function Room() {
     if (room) prevRevealed.current = room.revealed;
   }, [room?.revealed]);
 
+  // Clear local vote if server says we haven't voted (e.g., round was reset while offline)
+  useEffect(() => {
+    if (!room || !publicId) return;
+    const participant = room.participants[publicId];
+    if (participant && participant.vote === null && myVote !== null) {
+      setMyVote(null);
+      localStorage.removeItem(`vote_${roomId}`);
+    }
+  }, [room, publicId]);
+
   const handleVote = async (card: string) => {
     if (!joined || room?.revealed) return;
     setMyVote(card);
