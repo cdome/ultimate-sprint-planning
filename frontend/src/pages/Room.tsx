@@ -244,7 +244,6 @@ export function Room() {
                 .map((p, i) => (
                   <div key={i} className="result-card">
                     <span className="result-value">{p.vote ?? "–"}</span>
-                    <span className="result-name">{p.name}</span>
                   </div>
                 ))}
             </div>
