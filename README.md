@@ -28,25 +28,31 @@ Sprint planning poker for small teams. Built on Cloudflare Workers + Durable Obj
 ### 1. Install dependencies
 
 ```bash
-npm install          # root (esbuild for worker bundling)
+npm install          # root (wrangler + concurrently)
 cd frontend && npm install
 ```
 
-### 2. Terminal 1 — Vite dev server (HMR on :5173)
+> **Note:** Do not use npm workspaces. Frontend packages (e.g. `lucide-react`) must be installed inside `frontend/` — installing from root puts them in root `node_modules`, which Vite can't resolve.
+
+### 2. Run both servers
 
 ```bash
-cd frontend && npm run dev
+npm run dev
 ```
 
-### 3. Terminal 2 — Wrangler Worker + Durable Objects (:8788)
+This starts Vite (:5173) and Wrangler (:8788) concurrently. Open http://localhost:5173 — API and WebSocket calls are proxied to :8788.
+
+Or run them separately:
 
 ```bash
+# Terminal 1
+cd frontend && npm run dev
+
+# Terminal 2
 npm run dev:worker
 ```
 
-Open http://localhost:5173. API and WebSocket calls are proxied to :8788.
-
-> If you change worker code, restart Terminal 2.
+> If you change worker code, restart the Wrangler process.
 
 ## Deploy
 
