@@ -6,7 +6,7 @@ Sprint planning poker for small teams. Built on Cloudflare Workers + Durable Obj
 
 - **Create & share rooms** — one click to create, shareable URL to invite the team
 - **Anonymous voting** — cards stay hidden until reveal; vote values never sent over the wire until revealed
-- **Planning poker deck** — `0, 0.5, 1, 2, 3, 5, 8, 13, 21, ?, ☕`
+- **Planning poker deck** — `0, 1, 2, 3, 5, 8, 13, 21, ?, ☕`
 - **Real-time updates** — WebSocket push; all clients update instantly on every action
 - **Anyone can reveal** — no designated facilitator required; reveal button enabled once at least one vote is cast
 - **Anyone can reset** — start the next story with one click, all votes cleared

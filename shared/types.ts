@@ -10,6 +10,7 @@ export interface RoomState {
   participants: Record<string, Participant>;
   revealed: boolean;
   createdAt: number;
+  updatedAt?: number;
 }
 
 export const CARD_VALUES = ["0", "1", "2", "3", "5", "8", "13", "21", "?", "☕"];

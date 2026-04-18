@@ -9,6 +9,7 @@ declare class WebSocketPair {
 interface CFStorage {
   get<T>(key: string): Promise<T | undefined>;
   put<T>(key: string, value: T): Promise<void>;
+  deleteAll(): Promise<void>;
 }
 interface CFState {
   storage: CFStorage;
@@ -50,6 +51,8 @@ export class RoomDO {
     }
 
     const action = new URL(request.url).pathname.split("/").filter(Boolean).pop();
+
+    if (request.method === "DELETE") return this.handleDelete();
 
     if (request.method === "POST") {
       if (action === "join")   return this.handleJoin(request);
@@ -115,6 +118,7 @@ export class RoomDO {
   }
 
   private async save(room: StoredRoom): Promise<void> {
+    room.updatedAt = Date.now();
     this.room = room;
     await this.ctx.storage.put("room", room);
     this.broadcastOnly(room);
@@ -171,6 +175,15 @@ export class RoomDO {
       room.participants[id].vote = null;
     }
     await this.save(room);
+    return Response.json({ ok: true });
+  }
+
+  private async handleDelete(): Promise<Response> {
+    for (const ws of this.ctx.getWebSockets()) {
+      try { ws.close(1001, "Room deleted"); } catch { /* ignore */ }
+    }
+    await this.ctx.storage.deleteAll();
+    this.room = null;
     return Response.json({ ok: true });
   }
 }

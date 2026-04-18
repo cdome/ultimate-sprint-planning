@@ -1,6 +1,7 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
 import { Home } from "./pages/Home";
 import { Room } from "./pages/Room";
+import { Admin } from "./pages/Admin";
 import { ThemeSelector } from "./components/ThemeSelector";
 
 const SLOGANS = [
@@ -31,7 +32,11 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/room/:roomId" element={<Room />} />
+        <Route path="/admin" element={<Admin />} />
       </Routes>
+      <footer className="site-footer">
+        <Link to="/admin">Admin</Link>
+      </footer>
     </BrowserRouter>
   );
 }

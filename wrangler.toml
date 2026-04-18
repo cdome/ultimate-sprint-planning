@@ -11,6 +11,19 @@ not_found_handling = "single-page-application"
 name = "ROOMS"
 class_name = "RoomDO"
 
+[[durable_objects.bindings]]
+name = "ADMIN"
+class_name = "AdminDO"
+
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["RoomDO"]
+
+[[migrations]]
+tag = "v2"
+new_sqlite_classes = ["AdminDO"]
+
+[observability]
+[observability.logs]
+enabled = false
+invocation_logs = true
