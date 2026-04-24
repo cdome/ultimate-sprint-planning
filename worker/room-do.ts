@@ -54,6 +54,12 @@ export class RoomDO {
 
     if (request.method === "DELETE") return this.handleDelete();
 
+    // Admin read: return state without creating the room if it doesn't exist
+    if (action === "admin") {
+      if (!this.room) return new Response(null, { status: 404 });
+      return Response.json(this.mask(this.room));
+    }
+
     if (request.method === "POST") {
       if (action === "join")   return this.handleJoin(request);
       if (action === "vote")   return this.handleVote(request);

@@ -66,7 +66,7 @@ async function fetchRegistryRooms(env: Env): Promise<object[]> {
     roomIds.map(async (roomId) => {
       const stub = env.ROOMS.get(env.ROOMS.idFromName(roomId));
       try {
-        const res = await stub.fetch(new Request(`https://internal/api/rooms/${roomId}`));
+        const res = await stub.fetch(new Request(`https://internal/api/rooms/${roomId}/admin`));
         if (!res.ok) return null;
         return await res.json<{ roomId: string }>();
       } catch {
@@ -93,7 +93,7 @@ async function listRooms(env: Env): Promise<Response> {
     hexIds.map(async (hexId) => {
       const stub = env.ROOMS.get(env.ROOMS.idFromString(hexId));
       try {
-        const res = await stub.fetch(new Request("https://internal/state"));
+        const res = await stub.fetch(new Request("https://internal/api/rooms/x/admin"));
         if (!res.ok) return null;
         const room = await res.json<{ roomId: string }>();
         return knownIds.has(room.roomId) ? null : room; // skip duplicates
