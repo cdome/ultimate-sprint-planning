@@ -58,26 +58,8 @@ async function fetchAllHexIds(env: Env): Promise<string[]> {
   return hexIds;
 }
 
-/** List rooms using Cloudflare REST API — enumerates all DOs including pre-registry ones. */
-async function listRoomsViaAPI(env: Env) {
-  const hexIds = await fetchAllHexIds(env);
-  const rooms = await Promise.all(
-    hexIds.map(async (hexId) => {
-      const stub = env.ROOMS.get(env.ROOMS.idFromString(hexId));
-      try {
-        const res = await stub.fetch(new Request("https://internal/state"));
-        if (!res.ok) return null;
-        return await res.json();
-      } catch {
-        return null;
-      }
-    })
-  );
-  return Response.json(rooms.filter(Boolean));
-}
-
-/** List rooms using AdminDO registry — only rooms seen since AdminDO was deployed. */
-async function listRoomsViaRegistry(env: Env) {
+/** Fetch room states for all roomIds in the AdminDO registry. */
+async function fetchRegistryRooms(env: Env): Promise<object[]> {
   const listRes = await adminStub(env).fetch(new Request("https://internal/"));
   const { roomIds } = await listRes.json<{ roomIds: string[] }>();
   const rooms = await Promise.all(
@@ -86,13 +68,42 @@ async function listRoomsViaRegistry(env: Env) {
       try {
         const res = await stub.fetch(new Request(`https://internal/api/rooms/${roomId}`));
         if (!res.ok) return null;
-        return await res.json();
+        return await res.json<{ roomId: string }>();
       } catch {
         return null;
       }
     })
   );
-  return Response.json(rooms.filter(Boolean));
+  return rooms.filter(Boolean) as object[];
+}
+
+/** List all rooms: registry (real-time) + CF API (historical, for pre-registry rooms). */
+async function listRooms(env: Env): Promise<Response> {
+  // AdminDO registry is always up-to-date (rooms register on first access)
+  const registryRooms = await fetchRegistryRooms(env);
+
+  if (!env.CF_API_TOKEN || !env.CF_ACCOUNT_ID || !env.ROOMS_NAMESPACE_ID) {
+    return Response.json(registryRooms);
+  }
+
+  // Supplement with CF API to catch rooms that predate the AdminDO registry
+  const knownIds = new Set((registryRooms as { roomId: string }[]).map((r) => r.roomId));
+  const hexIds = await fetchAllHexIds(env);
+  const cfRooms = await Promise.all(
+    hexIds.map(async (hexId) => {
+      const stub = env.ROOMS.get(env.ROOMS.idFromString(hexId));
+      try {
+        const res = await stub.fetch(new Request("https://internal/state"));
+        if (!res.ok) return null;
+        const room = await res.json<{ roomId: string }>();
+        return knownIds.has(room.roomId) ? null : room; // skip duplicates
+      } catch {
+        return null;
+      }
+    })
+  );
+
+  return Response.json([...registryRooms, ...cfRooms.filter(Boolean)]);
 }
 
 export default {
@@ -101,8 +112,7 @@ export default {
 
     // Admin: list all rooms
     if (url.pathname === "/api/admin/rooms" && request.method === "GET") {
-      const hasCFCreds = env.CF_API_TOKEN && env.CF_ACCOUNT_ID && env.ROOMS_NAMESPACE_ID;
-      return hasCFCreds ? listRoomsViaAPI(env) : listRoomsViaRegistry(env);
+      return listRooms(env);
     }
 
     // Admin: delete a room
